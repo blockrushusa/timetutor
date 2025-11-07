@@ -1,29 +1,84 @@
-# Create T3 App
+# Time Tutor
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+Time Tutor is a Next.js (T3 stack) learning experience that drills you on converting 24-hour clocks to 12-hour time **and** translating meetings between world time zones. The quiz keeps score, plays celebratory/error tones, and lets you switch between twelve immersive skins ranging from “Space Drift” to “Molten Ember”.
 
-## What's next? How do I make an app with this?
+- **Tech stack**: Next.js App Router • TypeScript • Tailwind CSS v4 • pnpm
+- **Structure**: App routes for `/` (quiz), `/settings`, `/learn`, with shared providers/components
+- **Persistence**: Theme + timezone/DST preferences saved in `localStorage`
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+## Feature Overview
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+| Area | Highlights |
+| --- | --- |
+| Quiz (`/`) | Randomized 24h prompts, 12h answers, DST-aware timezone conversion, Web Audio cues, responsive hero |
+| Settings (`/settings`) | Skin gallery, pinned timezone scenarios (NYC→London/LA/Auckland, 12↔24 hour), custom dropdowns, DST toggles |
+| Learn (`/learn`) | Daylight-savings reference for every supported timezone, JSON-LD dataset for SEO |
+| Styling | 12 unique skins themed via a central preset map in `src/lib/themes.ts` |
+| Accessibility | Semantic sections, ARIA labels, live regions, focus states |
+| SEO | Canonical metadata, Open Graph/Twitter cards, structured data on quiz/learn pages |
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+## Quick Start
 
-## Learn More
+```bash
+# install dependencies
+pnpm install
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+# start the dev server
+pnpm dev
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+# lint and type-check
+pnpm lint
+pnpm typecheck
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+# build for production
+pnpm build
+```
 
-## How do I deploy this?
+Open http://localhost:3000 to see the quiz. Hop into `/settings` to test each skin, pin quick timezone presets (NYC↔Auckland, NYC↔London, NYC↔LA, 12↔24 Hour), or pick any custom pair from the dropdowns. Visit `/learn` for the daylight-savings cheat sheet.
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+## Environment
+
+No runtime env vars are required. If you add APIs or analytics later, expose them via the default `src/env.js` scaffolding from T3.
+
+## Project Structure
+
+```
+src/
+  app/
+    layout.tsx        # root metadata, global providers
+    page.tsx          # quiz UI
+    settings/page.tsx # skin picker, timezone presets, DST toggles
+    learn/page.tsx    # daylight savings reference
+  components/
+    theme-provider.tsx
+  lib/
+    themes.ts         # skin definitions
+    timezones.ts      # timezone metadata + pinned scenarios
+  styles/
+    globals.css
+```
+
+## Customization Tips
+
+- **Add skins**: extend `themePresets` in `src/lib/themes.ts` with new palettes; everything else picks them up automatically.
+- **Adjust sounds**: tweak `playSound` in `page.tsx` to change oscillator types or note sequences.
+- **Timezone presets**: add more pinned combos or extend `timezoneOptions` in `src/lib/timezones.ts` if you want full coverage.
+- **SEO**: update `metadata` in `layout.tsx` or modify the JSON-LD payload in `page.tsx` to match your production domain.
+- **Learn page content**: edit `src/app/learn/page.tsx` to include additional notes, charts, or resources.
+
+## Testing & Verification
+
+- `pnpm lint` – ESLint via Next.
+- `pnpm typecheck` – TypeScript `--noEmit`.
+- `pnpm build` – Ensures the app compiles with the latest Next.js build pipeline.
+
+## Contributing
+
+1. Fork and clone.
+2. Create a feature branch off `main`.
+3. Run `pnpm lint && pnpm typecheck && pnpm build` before opening a PR.
+4. Describe UX/SEO impacts in the PR body.
+
+## License
+
+MIT © blockrush — feel free to remix for other learning drills (number bases, timezone practice, anything that benefits from fast recognition and stylish feedback). 🎉

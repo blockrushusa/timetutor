@@ -5,16 +5,33 @@ import { type CSSProperties, useEffect, useState } from "react";
 
 import { useThemeSelection } from "~/components/theme-provider";
 import { themeEntries } from "~/lib/themes";
+import {
+  pinnedTimezoneScenarios,
+  timezoneOptionMap,
+  timezoneOptions,
+} from "~/lib/timezones";
 
 export default function SettingsPage() {
-  const { theme, setTheme, themeValues } = useThemeSelection();
+  const {
+    theme,
+    setTheme,
+    themeValues,
+    timezonePair,
+    setTimezonePair,
+    dstPreference,
+    setDstPreference,
+  } = useThemeSelection();
   const [previewTheme, setPreviewTheme] = useState(theme);
 
   useEffect(() => {
     setPreviewTheme(theme);
   }, [theme]);
 
-  const activePreview = themeEntries.find(([name]) => name === previewTheme)?.[1] ?? themeValues;
+  const activePreview =
+    themeEntries.find(([name]) => name === previewTheme)?.[1] ?? themeValues;
+
+  const sourceMeta = timezoneOptionMap[timezonePair.source];
+  const targetMeta = timezoneOptionMap[timezonePair.target];
 
   return (
     <main
@@ -37,7 +54,10 @@ export default function SettingsPage() {
       </div>
 
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 md:gap-14">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <header
+          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+          aria-label="Settings header"
+        >
           <div className="flex flex-col gap-1">
             <span
               className="text-xs uppercase tracking-[0.6em]"
@@ -52,22 +72,28 @@ export default function SettingsPage() {
               Choose a skin to remix the quiz atmosphere.
             </span>
           </div>
-          <Link
-            href="/"
-            className="nav-button rounded-full border px-5 py-2 text-sm font-semibold uppercase tracking-[0.25em]"
-            style={{
-              background: activePreview.button.bg,
-              borderColor: activePreview.button.border,
-              color: activePreview.button.text,
-              boxShadow: activePreview.button.shadow,
-            }}
-          >
-            Back to quiz
-          </Link>
-        </div>
+          <nav aria-label="Settings navigation">
+            <Link
+              href="/"
+              className="nav-button inline-flex rounded-full border px-5 py-2 text-sm font-semibold uppercase tracking-[0.25em]"
+              style={{
+                background: activePreview.button.bg,
+                borderColor: activePreview.button.border,
+                color: activePreview.button.text,
+                boxShadow: activePreview.button.shadow,
+              }}
+            >
+              Back to quiz
+            </Link>
+          </nav>
+        </header>
 
-        <header className="flex flex-col gap-3 text-left sm:gap-4">
+        <section
+          className="flex flex-col gap-3 text-left sm:gap-4"
+          aria-labelledby="skins-heading"
+        >
           <h1
+            id="skins-heading"
             className="text-balance text-3xl font-semibold leading-tight sm:text-4xl md:text-5xl"
             style={{ color: activePreview.text.primary }}
           >
@@ -81,10 +107,213 @@ export default function SettingsPage() {
             Your pick syncs instantly and sticks across visits. Perfect for
             midnight study sessions or Saturday morning drills.
           </p>
-        </header>
+        </section>
 
-        <section className="flex flex-col gap-6">
-          <div className="flex flex-wrap items-center gap-4 text-sm sm:text-base">
+        <section
+          className="flex flex-col gap-4"
+          aria-labelledby="timezones-heading"
+        >
+          <div>
+            <h2
+              id="timezones-heading"
+              className="text-2xl font-semibold"
+              style={{ color: activePreview.text.primary }}
+            >
+              Timezone trainer
+            </h2>
+            <p
+              className="text-sm text-white/80 sm:text-base"
+              style={{ color: activePreview.text.secondary }}
+            >
+              Pin a scenario such as New York ↔ Auckland or mix your own pair to
+              practice global conversions.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {pinnedTimezoneScenarios.map((preset) => {
+              const isActive =
+                preset.pair.source === timezonePair.source &&
+                preset.pair.target === timezonePair.target;
+              const presetSource =
+                timezoneOptionMap[preset.pair.source]?.label ??
+                preset.pair.source;
+              const presetTarget =
+                timezoneOptionMap[preset.pair.target]?.label ??
+                preset.pair.target;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => setTimezonePair(preset.pair)}
+                  className="settings-card flex flex-col gap-2 rounded-2xl border px-4 py-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+                  style={{
+                    background: activePreview.card.background,
+                    borderColor: isActive
+                      ? activePreview.correct.border
+                      : activePreview.card.border,
+                    boxShadow: isActive
+                      ? activePreview.correct.shadow
+                      : activePreview.card.shadow,
+                    color: activePreview.text.primary,
+                  }}
+                  aria-pressed={isActive}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold uppercase tracking-[0.2em]">
+                      {preset.label}
+                    </span>
+                    <span
+                      className="rounded-full border px-2 py-1 text-xs uppercase tracking-[0.3em]"
+                      style={{
+                        borderColor: activePreview.option.idle.border,
+                        color: activePreview.option.idle.text,
+                      }}
+                    >
+                      {isActive ? "Pinned" : "Apply"}
+                    </span>
+                  </div>
+                  <p className="text-lg font-semibold">
+                    {presetSource} → {presetTarget}
+                  </p>
+                  <p className="text-sm text-white/80">{preset.description}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          <form className="grid gap-4 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm sm:grid-cols-2">
+            <label className="flex flex-col gap-2">
+              <span className="text-xs uppercase tracking-[0.4em] text-white/70">
+                From timezone
+              </span>
+              <select
+                className="rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-white"
+                value={timezonePair.source}
+                onChange={(event) =>
+                  setTimezonePair((prev) => ({
+                    ...prev,
+                    source: event.target.value,
+                  }))
+                }
+              >
+                {timezoneOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label} ({option.offsetLabel})
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-white/60">
+                Current: {sourceMeta?.label ?? timezonePair.source}
+              </span>
+            </label>
+
+            <label className="flex flex-col gap-2">
+              <span className="text-xs uppercase tracking-[0.4em] text-white/70">
+                To timezone
+              </span>
+              <select
+                className="rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-white"
+                value={timezonePair.target}
+                onChange={(event) =>
+                  setTimezonePair((prev) => ({
+                    ...prev,
+                    target: event.target.value,
+                  }))
+                }
+              >
+                {timezoneOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label} ({option.offsetLabel})
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-white/60">
+                Current: {targetMeta?.label ?? timezonePair.target}
+              </span>
+            </label>
+
+            <div className="col-span-full flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                className="nav-button rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em]"
+                style={{
+                  background: activePreview.button.bg,
+                  borderColor: activePreview.button.border,
+                  color: activePreview.button.text,
+                  boxShadow: activePreview.button.shadow,
+                }}
+                onClick={() =>
+                  setTimezonePair((prev) => ({
+                    source: prev.target,
+                    target: prev.source,
+                  }))
+                }
+              >
+                Swap timezones
+              </button>
+              <span className="text-xs text-white/70">
+                Practicing: {sourceMeta?.label ?? timezonePair.source} →
+                {" "}{targetMeta?.label ?? timezonePair.target}
+              </span>
+            </div>
+
+            <div className="col-span-full grid gap-4 sm:grid-cols-2">
+              <label className="flex items-start gap-3 rounded-2xl border border-white/15 bg-black/20 px-3 py-3">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={dstPreference.source}
+                  onChange={(event) =>
+                    setDstPreference((prev) => ({
+                      ...prev,
+                      source: event.target.checked,
+                    }))
+                  }
+                  disabled={!sourceMeta?.dstObserves}
+                />
+                <span className="text-xs text-white/80 sm:text-sm">
+                  Apply daylight savings for {sourceMeta?.label ?? "source"}{" "}
+                  {!sourceMeta?.dstObserves && "(not applicable)"}
+                  {sourceMeta?.dstObserves && sourceMeta.dstStartNote && (
+                    <span className="block text-[0.65rem] uppercase tracking-[0.35em] text-white/60">
+                      {sourceMeta.dstStartNote} – {sourceMeta.dstEndNote}
+                    </span>
+                  )}
+                </span>
+              </label>
+              <label className="flex items-start gap-3 rounded-2xl border border-white/15 bg-black/20 px-3 py-3">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={dstPreference.target}
+                  onChange={(event) =>
+                    setDstPreference((prev) => ({
+                      ...prev,
+                      target: event.target.checked,
+                    }))
+                  }
+                  disabled={!targetMeta?.dstObserves}
+                />
+                <span className="text-xs text-white/80 sm:text-sm">
+                  Apply daylight savings for {targetMeta?.label ?? "target"}{" "}
+                  {!targetMeta?.dstObserves && "(not applicable)"}
+                  {targetMeta?.dstObserves && targetMeta.dstStartNote && (
+                    <span className="block text-[0.65rem] uppercase tracking-[0.35em] text-white/60">
+                      {targetMeta.dstStartNote} – {targetMeta.dstEndNote}
+                    </span>
+                  )}
+                </span>
+              </label>
+            </div>
+          </form>
+        </section>
+
+        <section className="flex flex-col gap-6" aria-labelledby="skins-heading">
+          <div
+            className="flex flex-wrap items-center gap-4 text-sm sm:text-base"
+            aria-label="Skin status"
+          >
             <span
               className="rounded-full px-4 py-2 text-xs uppercase tracking-[0.35em]"
               style={{
