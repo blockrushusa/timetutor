@@ -47,6 +47,7 @@ src/
   app/
     layout.tsx        # root metadata, global providers
     page.tsx          # quiz UI
+    about/page.tsx    # background + mission statement
     settings/page.tsx # skin picker, timezone presets, DST toggles
     learn/page.tsx    # daylight savings reference
   components/

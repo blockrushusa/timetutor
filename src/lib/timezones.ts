@@ -1,3 +1,5 @@
+const GMT_OFFSET_REGEX = /GMT([+-])(\d{1,2})(?::?(\d{2}))?/i;
+
 export type TimezoneOption = {
   id: string;
   label: string;
@@ -162,7 +164,7 @@ export const timezoneOptionMap = timezoneOptions.reduce<Record<string, TimezoneO
 
 export const defaultTimezonePair: TimezonePair = {
   source: "America/New_York",
-  target: "Europe/London",
+  target: "America/New_York",
 };
 
 export const pinnedTimezoneScenarios: Array<{
@@ -196,3 +198,31 @@ export const pinnedTimezoneScenarios: Array<{
     pair: { source: "America/New_York", target: "America/Los_Angeles" },
   },
 ];
+
+function getOffsetMinutes(zone: string, date: Date) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: zone,
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "shortOffset",
+  });
+  const parts = formatter.formatToParts(date);
+  const offsetValue =
+    parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT";
+  const match = GMT_OFFSET_REGEX.exec(offsetValue);
+  if (!match) return 0;
+  const sign = match[1] === "-" ? -1 : 1;
+  const hours = Number(match[2]);
+  const minutes = match[3] ? Number(match[3]) : 0;
+  return sign * (hours * 60 + minutes);
+}
+
+export function isCurrentlyDst(zoneId: string) {
+  const meta = timezoneOptionMap[zoneId];
+  if (!meta?.dstObserves) return false;
+  const currentOffset = getOffsetMinutes(zoneId, new Date());
+  if (typeof meta.dstOffsetMinutes === "number") {
+    return currentOffset === meta.dstOffsetMinutes;
+  }
+  return currentOffset !== meta.standardOffsetMinutes;
+}

@@ -14,8 +14,8 @@ import {
 import { themePresets, type ThemeName, type ThemePreset } from "~/lib/themes";
 import {
   defaultTimezonePair,
-  timezoneOptionMap,
   type TimezonePair,
+  isCurrentlyDst,
 } from "~/lib/timezones";
 
 type ThemeContextValue = {
@@ -45,8 +45,8 @@ export function ThemeProvider(props: { children: ReactNode }) {
   const [timezonePair, setTimezonePair] =
     useState<TimezonePair>(defaultTimezonePair);
   const [dstPreference, setDstPreference] = useState<DstPreference>({
-    source: true,
-    target: true,
+    source: isCurrentlyDst(defaultTimezonePair.source),
+    target: isCurrentlyDst(defaultTimezonePair.target),
   });
 
   useEffect(() => {
@@ -102,13 +102,9 @@ export function ThemeProvider(props: { children: ReactNode }) {
   }, [dstPreference]);
 
   useEffect(() => {
-    setDstPreference((prev) => {
-      const sourceOption = timezoneOptionMap[timezonePair.source];
-      const targetOption = timezoneOptionMap[timezonePair.target];
-      return {
-        source: sourceOption?.dstObserves ? prev.source : false,
-        target: targetOption?.dstObserves ? prev.target : false,
-      };
+    setDstPreference({
+      source: isCurrentlyDst(timezonePair.source),
+      target: isCurrentlyDst(timezonePair.target),
     });
   }, [timezonePair]);
 

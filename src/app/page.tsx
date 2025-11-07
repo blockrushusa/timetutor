@@ -14,7 +14,6 @@ import {
 import { useThemeSelection } from "~/components/theme-provider";
 import { type ThemePreset } from "~/lib/themes";
 import {
-  defaultTimezonePair,
   timezoneOptionMap,
   type TimezonePair,
 } from "~/lib/timezones";
@@ -39,26 +38,29 @@ type FeedbackState = "idle" | "correct" | "incorrect";
 const OPTION_COUNT = 3;
 const VARIANT_OFFSETS = [15, 30, 45, 60, 90, 120];
 
-const defaultSourceMeta = timezoneOptionMap[defaultTimezonePair.source];
-const defaultTargetMeta = timezoneOptionMap[defaultTimezonePair.target];
+type DstPreferenceState = {
+  source: boolean;
+  target: boolean;
+};
 
 const PLACEHOLDER_QUESTION: Question = {
   hour24: 0,
   minute: 0,
   options: ["12:00 AM", "12:05 AM", "12:10 AM"],
   correct: "12:00 AM",
-  sourceZone: defaultTimezonePair.source,
-  targetZone: defaultTimezonePair.target,
-  sourceLabel: defaultSourceMeta?.label ?? "Source",
-  targetLabel: defaultTargetMeta?.label ?? "Target",
-  sourceCountry: defaultSourceMeta?.country ?? "",
-  targetCountry: defaultTargetMeta?.country ?? "",
+  sourceZone: "America/New_York",
+  targetZone: "America/New_York",
+  sourceLabel: "12/24 Hour",
+  targetLabel: "12/24 Hour",
+  sourceCountry: "United States",
+  targetCountry: "United States",
   sourceDstEnabled: true,
   targetDstEnabled: true,
 };
 
 export default function HomePage() {
-  const { themeValues, timezonePair, dstPreference } = useThemeSelection();
+  const { themeValues, timezonePair, dstPreference, setDstPreference } =
+    useThemeSelection();
   const [question, setQuestion] = useState<Question | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState>("idle");
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -66,6 +68,7 @@ export default function HomePage() {
   const [totalCount, setTotalCount] = useState(0);
   const audioContextRef = useRef<AudioContext | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipDstRegenerationRef = useRef(false);
 
   useEffect(() => {
     const getTimeout = () => timeoutRef.current;
@@ -86,6 +89,10 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (skipDstRegenerationRef.current) {
+      skipDstRegenerationRef.current = false;
+      return;
+    }
     setQuestion(null);
     setSelectedOption(null);
     setFeedback("idle");
@@ -107,6 +114,62 @@ export default function HomePage() {
   const scenarioSubHeading = isSameZone
     ? activeQuestion.sourceCountry || activeQuestion.sourceLabel
     : `${activeQuestion.sourceCountry || activeQuestion.sourceLabel} to ${activeQuestion.targetCountry || activeQuestion.targetLabel}`;
+  const sourceZoneMeta = timezoneOptionMap[timezonePair.source];
+  const targetZoneMeta = timezoneOptionMap[timezonePair.target];
+  const sourceAllowsDst = !!sourceZoneMeta?.dstObserves;
+  const targetAllowsDst = !!targetZoneMeta?.dstObserves;
+
+  const sourceDstStyle = dstPreference.source
+    ? {
+        background: themeValues.correct.bg,
+        borderColor: themeValues.correct.border,
+        color: themeValues.correct.text,
+        boxShadow: themeValues.correct.shadow,
+        opacity: sourceAllowsDst ? 1 : 0.4,
+      }
+    : {
+        background: themeValues.incorrect.bg,
+        borderColor: themeValues.incorrect.border,
+        color: themeValues.incorrect.text,
+        boxShadow: themeValues.incorrect.shadow,
+        opacity: sourceAllowsDst ? 1 : 0.4,
+      };
+  const targetDstStyle = dstPreference.target
+    ? {
+        background: themeValues.correct.bg,
+        borderColor: themeValues.correct.border,
+        color: themeValues.correct.text,
+        boxShadow: themeValues.correct.shadow,
+        opacity: targetAllowsDst ? 1 : 0.4,
+      }
+    : {
+        background: themeValues.incorrect.bg,
+        borderColor: themeValues.incorrect.border,
+        color: themeValues.incorrect.text,
+        boxShadow: themeValues.incorrect.shadow,
+        opacity: targetAllowsDst ? 1 : 0.4,
+      };
+
+  const handleDstToggle = (target: "source" | "target") => {
+    const allows = target === "source" ? sourceAllowsDst : targetAllowsDst;
+    if (!allows) return;
+    const nextPref: DstPreferenceState = {
+      ...dstPreference,
+      [target]: !dstPreference[target],
+    };
+    skipDstRegenerationRef.current = true;
+    setDstPreference(nextPref);
+    setQuestion((prev) =>
+      prev
+        ? buildQuestionWithTime(
+            prev.hour24,
+            prev.minute,
+            timezonePair,
+            nextPref,
+          )
+        : prev,
+    );
+  };
 
   const structuredData = useMemo(
     () => ({
@@ -207,9 +270,9 @@ export default function HomePage() {
             >
               Time Tutor
             </span>
-            <p className="text-sm text-white/80 sm:text-base">
-              Convert 24-hour clocks and jump between time zones with confidence.
-            </p>
+          <p className="text-sm text-white/80 sm:text-base">
+            A simple, practical way to learn time zone conversions rote.
+          </p>
           </div>
 
           <nav
@@ -240,6 +303,18 @@ export default function HomePage() {
             >
               Learn
             </Link>
+            <Link
+              href="/about"
+              className="nav-button rounded-full border px-5 py-2 text-sm font-semibold uppercase tracking-[0.25em]"
+              style={{
+                background: "transparent",
+                borderColor: themeValues.option.idle.border,
+                color: themeValues.option.idle.text,
+                boxShadow: "none",
+              }}
+            >
+              About
+            </Link>
           </nav>
         </header>
 
@@ -252,13 +327,11 @@ export default function HomePage() {
             className="text-balance text-3xl font-semibold leading-tight sm:text-4xl md:text-5xl"
             style={{ color: themeValues.text.primary }}
           >
-            Convert 24-hour clocks to 12-hour time in seconds flat.
+            A simple, practical way to learn time zone conversions rote.
           </h1>
-          <p
-            className="mx-auto max-w-2xl text-pretty text-base leading-relaxed text-white/80 md:text-lg"
-          >
-            Tap the matching clock while the beat plays. Each win boosts your
-            accuracy streak, then dive into settings whenever you want a new look.
+          <p className="mx-auto max-w-2xl text-pretty text-base leading-relaxed text-white/80 md:text-lg">
+            Are you in New York and work with someone in London? Want to finally
+            stop subtracting 12 when converting 24-hour time? Tired of doing math?
           </p>
         </section>
 
@@ -298,13 +371,33 @@ export default function HomePage() {
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-2 text-[0.65rem] uppercase tracking-[0.35em] text-white/70">
-              <span className="rounded-full border border-white/20 px-3 py-1">
-                Source DST: {activeQuestion.sourceDstEnabled ? "On" : "Off"}
-              </span>
-              <span className="rounded-full border border-white/20 px-3 py-1">
-                Target DST: {activeQuestion.targetDstEnabled ? "On" : "Off"}
-              </span>
+            <div className="flex flex-wrap items-center justify-center gap-3 text-[0.65rem] uppercase tracking-[0.35em] text-white/70">
+              <button
+                type="button"
+                className="rounded-2xl border border-white/20 px-3 py-1 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+                onClick={() => handleDstToggle("source")}
+                aria-pressed={dstPreference.source}
+                style={sourceDstStyle}
+                disabled={!sourceAllowsDst}
+              >
+                Source
+                <br />
+                Daylight Savings:&nbsp;
+                {dstPreference.source ? "On" : "Off"}
+              </button>
+              <button
+                type="button"
+                className="rounded-2xl border border-white/20 px-3 py-1 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+                onClick={() => handleDstToggle("target")}
+                aria-pressed={dstPreference.target}
+                style={targetDstStyle}
+                disabled={!targetAllowsDst}
+              >
+                Target
+                <br />
+                Daylight Savings:&nbsp;
+                {dstPreference.target ? "On" : "Off"}
+              </button>
             </div>
           </div>
 
@@ -484,12 +577,21 @@ function getOffsetForZone(zoneId: string, useDst: boolean) {
 
 function generateQuestion(
   pair: TimezonePair,
-  dstPreference: { source: boolean; target: boolean },
+  dstPreference: DstPreferenceState,
+): Question {
+  const hour24 = Math.floor(Math.random() * 24);
+  const minute = Math.floor(Math.random() * 12) * 5;
+  return buildQuestionWithTime(hour24, minute, pair, dstPreference);
+}
+
+function buildQuestionWithTime(
+  hour24: number,
+  minute: number,
+  pair: TimezonePair,
+  dstPreference: DstPreferenceState,
 ): Question {
   const sourceMeta = timezoneOptionMap[pair.source];
   const targetMeta = timezoneOptionMap[pair.target];
-  const hour24 = Math.floor(Math.random() * 24);
-  const minute = Math.floor(Math.random() * 12) * 5;
   const sourceOffset = getOffsetForZone(pair.source, dstPreference.source);
   const targetOffset = getOffsetForZone(pair.target, dstPreference.target);
 
@@ -521,7 +623,6 @@ function generateQuestion(
     targetDstEnabled: dstPreference.target && !!targetMeta?.dstObserves,
   };
 }
-
 function shuffleArray<T>(values: Iterable<T>): T[] {
   const array = Array.from(values);
   for (let i = array.length - 1; i > 0; i--) {
