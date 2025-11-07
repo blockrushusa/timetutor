@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+.answer-button {
+  transition: transform 0.22s ease, box-shadow 0.25s ease,
+    background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.answer-button:hover:not(:disabled),
+.answer-button:focus-visible {
+  background: var(--answer-hover-bg, inherit);
+  border-color: var(--answer-hover-border, inherit);
+  box-shadow: var(--answer-hover-shadow, none);
+  transform: translateY(-4px);
+}
+
+.answer-button:disabled {
+  cursor: default;
+}
+
+.skip-button {
+  transition: transform 0.2s ease, box-shadow 0.25s ease,
+    background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.skip-button:hover,
+.skip-button:focus-visible {
+  background: var(--skip-hover-bg, inherit);
+  border-color: var(--skip-hover-border, inherit);
+  box-shadow: var(--skip-hover-shadow, none);
+  transform: translateY(-3px);
+}
+
+.nav-button {
+  transition: transform 0.22s ease, box-shadow 0.28s ease,
+    background 0.25s ease, border-color 0.25s ease;
+}
+
+.nav-button:hover,
+.nav-button:focus-visible {
+  transform: translateY(-4px) scale(1.02);
+  filter: brightness(1.05);
+}
+
+.quiz-card {
+  animation: scale-in 0.6s ease forwards;
+}
+
+.animate-rise {
+  animation: rise-up 0.7s ease forwards;
+}
+
+.shine-text {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine-text::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.2) 40%, rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0.2) 60%, transparent 100%);
+  transform: translateX(-120%);
+  animation: shine 3.5s ease-in-out infinite;
+}
+
+.settings-card {
+  transition: transform 0.24s ease, box-shadow 0.3s ease,
+    border-color 0.25s ease, opacity 0.25s ease;
+}
+
+.settings-card:hover,
+.settings-card:focus-visible {
+  transform: translateY(-6px) scale(1.02);
+}
+
+.badge-preview {
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
+}
+
+.badge-preview:hover,
+.badge-preview:focus-visible {
+  transform: translateY(-3px);
+}
+
+.orbital-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(120px);
+  opacity: 0.7;
+}
+
+.orbital-glow.glow-one {
+  top: -15%;
+  left: -10%;
+  width: 28rem;
+  height: 28rem;
+  animation: float 12s ease-in-out infinite;
+}
+
+.orbital-glow.glow-two {
+  bottom: -10%;
+  right: -15%;
+  width: 32rem;
+  height: 32rem;
+  animation: float 16s ease-in-out infinite reverse;
+}
+
+.aurora-band {
+  position: absolute;
+  inset: -40% 0 auto;
+  height: 60%;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.08), transparent);
+  filter: blur(40px);
+  animation: gradient-pan 18s linear infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate3d(3%, -6%, 0) scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-120%);
+  }
+  60% {
+    transform: translateX(130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+@keyframes gradient-pan {
+  0% {
+    transform: translateX(-20%) skewX(-6deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateX(20%) skewX(4deg);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(-20%) skewX(-6deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes rise-up {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
