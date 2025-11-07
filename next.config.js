@@ -7,6 +7,8 @@ import "./src/env.js";
 /** @type {import("next").NextConfig} */
 const config = {
   output: 'export',
+  basePath: '/timetutor',
+  assetPrefix: '/timetutor/',
 };
 
 export default config;
